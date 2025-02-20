@@ -33,7 +33,7 @@ Use `end_to_end_notebook.ipynb` for a comprehensive workflow that:
 
 The current parameters are set up such that it can run on a 2-node A100 (Azure) cluster. If you create your all-purpose cluster manually, make sure you run on (GPU) ML runtime 15.4+ add the following Spark configurations:
 
-````
+```
 spark.databricks.pyspark.dataFrameChunk.enabled true
 spark.task.resource.gpu.amount 0
 ```
