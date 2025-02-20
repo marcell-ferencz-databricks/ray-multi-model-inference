@@ -3,14 +3,10 @@ bundle:
   name: ray-mult-model-inference
 
 variables:
-  target_workspace:
-    type: string
-    description: The target workspace to deploy the bundle to
-    default: [[POPULATE]]
   target_catalog:
     type: string
     description: The target UC catalog name to download and write assets to
-    default: main
+    default: marcell
   target_schema:
     type: string
     description: The target UC schema name to download and write assets to
@@ -113,7 +109,7 @@ resources:
         enabled: true
       parameters:
         - name: catalog
-          default: ${var.catalog}
+          default: ${var.target_catalog}
         - name: schema
           default: ${var.target_schema}
         - name: transcription_model_id
@@ -124,6 +120,3 @@ resources:
 targets:
   azure:
     default: true
-    workspace:
-      host: ${var.target_workspace}
-    
