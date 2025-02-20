@@ -31,6 +31,13 @@ Use `end_to_end_notebook.ipynb` for a comprehensive workflow that:
 - Sets up required models ([whisper-medium](https://huggingface.co/openai/whisper-medium) and [phi-4](https://huggingface.co/microsoft/phi-4))
 - Executes the complete inference pipeline with [Ray on Databricks](https://docs.databricks.com/aws/en/machine-learning/ray)
 
+The current parameters are set up such that it can run on a 2-node A100 (Azure) cluster. If you create your all-purpose cluster manually, make sure you run on (GPU) ML runtime 15.4+ add the following Spark configurations:
+
+````
+spark.databricks.pyspark.dataFrameChunk.enabled true
+spark.task.resource.gpu.amount 0
+```
+
 #### Option 2: Production Workflow
 
 The `job_notebooks` directory contains a structured Databricks job that:
