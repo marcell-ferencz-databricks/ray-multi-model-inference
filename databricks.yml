@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=bundle_config_schema.json
+bundle:
+  name: ray-mult-model-inference
+
+resources:
+  jobs:
+    Ray_Multi_Model_Inference:
+      name: Ray Multi-Model Inference (Bundle)
+      tasks:
+        - task_key: check_if_models_exist
+          notebook_task:
+            notebook_path: job_notebooks/00_check_if_models_exist
+            source: GIT
+        - task_key: download_data
+          notebook_task:
+            notebook_path: job_notebooks/01_download_data
+            source: GIT
+        - task_key: model_needs_downloading
+          depends_on:
+            - task_key: check_if_models_exist
+          condition_task:
+            op: EQUAL_TO
+            left: "{{tasks.check_if_models_exist.values.model_needs_downloading}}"
+            right: "true"
+        - task_key: download_models
+          depends_on:
+            - task_key: model_needs_downloading
+              outcome: "true"
+          notebook_task:
+            notebook_path: job_notebooks/02_download_models
+            source: GIT
+          job_cluster_key: download_models_cluster
+        - task_key: run_inference
+          depends_on:
+            - task_key: download_models
+            - task_key: download_data
+            - task_key: model_needs_downloading
+              outcome: "false"
+          notebook_task:
+            notebook_path: job_notebooks/03_run_inference
+            source: GIT
+          job_cluster_key: run_inference_cluster
+      job_clusters:
+        - job_cluster_key: download_models_cluster
+          new_cluster:
+            cluster_name: ""
+            spark_version: 15.4.x-gpu-ml-scala2.12
+            spark_conf:
+              spark.master: local[*, 4]
+              spark.databricks.cluster.profile: singleNode
+            azure_attributes:
+              first_on_demand: 1
+              availability: ON_DEMAND_AZURE
+              spot_bid_max_price: -1
+            node_type_id: Standard_NC24ads_A100_v4
+            driver_node_type_id: Standard_NC24ads_A100_v4
+            custom_tags:
+              ResourceClass: SingleNode
+            enable_elastic_disk: true
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            num_workers: 0
+        - job_cluster_key: run_inference_cluster
+          new_cluster:
+            cluster_name: ""
+            spark_version: 15.4.x-gpu-ml-scala2.12
+            azure_attributes:
+              first_on_demand: 1
+              availability: ON_DEMAND_AZURE
+              spot_bid_max_price: -1
+            node_type_id: Standard_NC24ads_A100_v4
+            enable_elastic_disk: true
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            num_workers: 2
+      git_source:
+        git_url: https://github.com/marcell-ferencz-databricks/ray-multi-model-inference.git
+        git_provider: gitHub
+        git_branch: main
+      queue:
+        enabled: true
+      parameters:
+        - name: catalog
+          default: marcell
+        - name: schema
+          default: ray_multi_model_inference
+        - name: transcription_model_id
+          default: openai/whisper-medium
+        - name: llm_model_id
+          default: microsoft/phi-4
+
+
+targets:
+  development:
+    default: true
+    workspace:
+      host: ADD
