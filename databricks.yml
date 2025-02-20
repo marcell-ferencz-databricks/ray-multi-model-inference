@@ -6,7 +6,7 @@ variables:
   target_catalog:
     type: string
     description: The target UC catalog name to download and write assets to
-    default: marcell
+    default: main
   target_schema:
     type: string
     description: The target UC schema name to download and write assets to
