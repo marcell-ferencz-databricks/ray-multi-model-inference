@@ -43,30 +43,56 @@ The `job_notebooks` directory contains a structured Databricks job that:
     - Schemas
     - Model selection
 
+### Step-by-step Instructions for Deploying Option 2
 
-### Deployment with Databricks Asset Bundles
+#### 1. Install the Databricks CLI
 
-1. Ensure your Databricks CLI is configured
-2. Navigate to the repository root
-3. Deploy using Asset Bundles commands
+Install and configure the Databricks CLI on your machine following the [guide](https://docs.databricks.com/dev-tools/cli/databricks-cli.html)
+
+#### 2. Set up Authentication for Asset Bundles
+
+Follow the [guidance](https://docs.databricks.com/aws/en/dev-tools/bundles/authentication) on how to set this up. It is recommended to use [attended authentication](https://docs.databricks.com/aws/en/dev-tools/bundles/authentication#attended-authentication) for secure and seamless access. This will also configure your host workspace, as this is not explicitly set in the bundle settings.
+
+#### 3. (Optional) Amend Default Values
+
+The below default values are set for running the job:
+
+* Target Catalog name: `main`
+* Target Schema name: `ray_multi_model_inference`
+* Transcription model Huggingface ID: `openai/whisper-medium`
+* LLM Huggingface ID: `microsoft/phi-4`
+
+If you want to change any of these, this can be done by editing the variables near the top of `databricks.yml`. For alternative ways of setting variables, please see the [documentation](https://docs.databricks.com/aws/en/dev-tools/bundles/variables#set-a-variables-value).
+
+#### 4. Validate the Bundle
+
+To ensure everything is correct, validate the bundle with
 
 ```bash
-databricks bundle deploy
+databricks bundle validate [-p <your-auth-profile>]
 ```
 
+(with optional inline profile-based authentication with `-p` indicated).
+
+#### 5. Deploy the Job
+
+Create the job in your authenticated Databricks workspace with
+
+```bash
+databricks bundle deploy [-p <your-auth-profile>]
+```
+
+#### 6. Run the Job
+
+You can now navigate to the Workflows section in your workspace and find the job created with the name _Ray Multi-Model Inference Bundle_ (unless changed).
+
+You can run the job now, which you can expect to take between 1-2 hours if the sample data needs to be unzipped, or the models need to be downloaded, or 15-20 minutes without.
+
+_NB these will take different times if you use different models or source data._
 
 ## Additional Resources
 
-- [Databricks CLI Installation Guide](https://docs.databricks.com/dev-tools/cli/databricks-cli.html)
 - [Getting Started with Databricks Asset Bundles](https://docs.databricks.com/dev-tools/bundles/index.html)
 - [Databricks Workspace Setup](https://docs.databricks.com/workspace/workspace-details.html)
 
-
-## License
-
-[Include license information if available]
-
-<div style="text-align: center">⁂</div>
-
-[^1]: https://github.com/marcell-ferencz-databricks/ray-multi-model-inference
 
