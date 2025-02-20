@@ -2,10 +2,32 @@
 bundle:
   name: ray-mult-model-inference
 
+variables:
+  target_workspace:
+    type: string
+    description: The target workspace to deploy the bundle to
+    default: [[POPULATE]]
+  target_catalog:
+    type: string
+    description: The target UC catalog name to download and write assets to
+    default: main
+  target_schema:
+    type: string
+    description: The target UC schema name to download and write assets to
+    default: ray_multi_model_inference
+  transcription_model_id:
+    type: string
+    description: The Hugging Face model ID to use for transcription
+    default: openai/whisper-medium
+  llm_model_id:
+    type: string
+    description: The Hugging Face model ID to use for LLM
+    default: microsoft/phi-4
+
 resources:
   jobs:
     Ray_Multi_Model_Inference:
-      name: Ray Multi-Model Inference (Bundle)
+      name: Ray Multi-Model Inference Bundle
       tasks:
         - task_key: check_if_models_exist
           notebook_task:
@@ -22,6 +44,23 @@ resources:
             op: EQUAL_TO
             left: "{{tasks.check_if_models_exist.values.model_needs_downloading}}"
             right: "true"
+        - task_key: run_inference
+          depends_on:
+            - task_key: download_models
+            - task_key: download_data
+          notebook_task:
+            notebook_path: job_notebooks/03_run_inference
+            source: GIT
+          job_cluster_key: run_inference_cluster
+        - task_key: run_inference_no_model_download
+          depends_on:
+            - task_key: model_needs_downloading
+              outcome: "false"
+            - task_key: download_data
+          notebook_task:
+            notebook_path: job_notebooks/03_run_inference
+            source: GIT
+          job_cluster_key: run_inference_cluster
         - task_key: download_models
           depends_on:
             - task_key: model_needs_downloading
@@ -30,40 +69,14 @@ resources:
             notebook_path: job_notebooks/02_download_models
             source: GIT
           job_cluster_key: download_models_cluster
-        - task_key: run_inference
-          depends_on:
-            - task_key: download_models
-            - task_key: download_data
-            - task_key: model_needs_downloading
-              outcome: "false"
-          notebook_task:
-            notebook_path: job_notebooks/03_run_inference
-            source: GIT
-          job_cluster_key: run_inference_cluster
       job_clusters:
-        - job_cluster_key: download_models_cluster
-          new_cluster:
-            cluster_name: ""
-            spark_version: 15.4.x-gpu-ml-scala2.12
-            spark_conf:
-              spark.master: local[*, 4]
-              spark.databricks.cluster.profile: singleNode
-            azure_attributes:
-              first_on_demand: 1
-              availability: ON_DEMAND_AZURE
-              spot_bid_max_price: -1
-            node_type_id: Standard_NC24ads_A100_v4
-            driver_node_type_id: Standard_NC24ads_A100_v4
-            custom_tags:
-              ResourceClass: SingleNode
-            enable_elastic_disk: true
-            data_security_mode: SINGLE_USER
-            runtime_engine: STANDARD
-            num_workers: 0
         - job_cluster_key: run_inference_cluster
           new_cluster:
-            cluster_name: ""
+            cluster_name: "multi_gpu_cluster"
             spark_version: 15.4.x-gpu-ml-scala2.12
+            spark_conf:
+              spark.task.resource.gpu.amount: "0"
+              spark.databricks.pyspark.dataFrameChunk.enabled: "true"
             azure_attributes:
               first_on_demand: 1
               availability: ON_DEMAND_AZURE
@@ -73,6 +86,25 @@ resources:
             data_security_mode: SINGLE_USER
             runtime_engine: STANDARD
             num_workers: 2
+        - job_cluster_key: download_models_cluster
+          new_cluster:
+            cluster_name: "model_download_cluster"
+            spark_version: 15.4.x-cpu-ml-scala2.12
+            spark_conf:
+              spark.master: local[*, 4]
+              spark.databricks.cluster.profile: singleNode
+            azure_attributes:
+              first_on_demand: 1
+              availability: ON_DEMAND_AZURE
+              spot_bid_max_price: -1
+            node_type_id: Standard_D16ads_v5
+            driver_node_type_id: Standard_D16ads_v5
+            custom_tags:
+              ResourceClass: SingleNode
+            enable_elastic_disk: true
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            num_workers: 0
       git_source:
         git_url: https://github.com/marcell-ferencz-databricks/ray-multi-model-inference.git
         git_provider: gitHub
@@ -81,17 +113,17 @@ resources:
         enabled: true
       parameters:
         - name: catalog
-          default: marcell
+          default: ${var.catalog}
         - name: schema
-          default: ray_multi_model_inference
+          default: ${var.target_schema}
         - name: transcription_model_id
-          default: openai/whisper-medium
+          default: ${var.transcription_model_id}
         - name: llm_model_id
-          default: microsoft/phi-4
-
+          default: ${var.llm_model_id}
 
 targets:
-  development:
+  azure:
     default: true
     workspace:
-      host: ADD
+      host: ${var.target_workspace}
+    

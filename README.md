@@ -27,9 +27,9 @@ The project showcases how to orchestrate multiple AI models for audio processing
 
 Use `end_to_end_notebook.ipynb` for a comprehensive workflow that:
 
-- Downloads LJSpeech sample data
-- Sets up required models (whisper-medium and phi-4)
-- Executes the complete inference pipeline
+- Downloads [LJSpeech](https://paperswithcode.com/dataset/ljspeech) sample data
+- Sets up required models ([whisper-medium](https://huggingface.co/openai/whisper-medium) and [phi-4](https://huggingface.co/microsoft/phi-4))
+- Executes the complete inference pipeline with [Ray on Databricks](https://docs.databricks.com/aws/en/machine-learning/ray)
 
 #### Option 2: Production Workflow
 
