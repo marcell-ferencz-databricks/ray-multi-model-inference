@@ -86,6 +86,10 @@ databricks bundle deploy [-p <your-auth-profile>]
 
 You can now navigate to the Workflows section in your workspace and find the job created with the name _Ray Multi-Model Inference Bundle_ (unless changed).
 
+![Job DAG Screenshot](assets/job_dag_screenshot.png)
+
+This looks more complicated than it is; this is because there are checks for whether there is any need to download models. If not, we don't need to spin up the ML cluster to initialise and save the models in the first place.
+
 You can run the job now, which you can expect to take between 1-2 hours if the sample data needs to be unzipped, or the models need to be downloaded, or 15-20 minutes without.
 
 _NB these will take different times if you use different models or source data._
